@@ -2,7 +2,7 @@ const test = require('ava')
 const { AssertionError } = require('assert')
 const { stderr } = require('test-console')
 const path = require('path')
-const grpc = require('grpc')
+const grpc = require('@grpc/grpc-js')
 
 const Mali = require('../')
 const tu = require('./util')

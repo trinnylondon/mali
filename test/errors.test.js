@@ -1,6 +1,6 @@
 const test = require('ava')
 const path = require('path')
-const grpc = require('grpc')
+const grpc = require('@grpc/grpc-js')
 const hl = require('highland')
 const async = require('async')
 const _ = require('lodash')
