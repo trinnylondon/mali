@@ -31,7 +31,7 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
 'use strict';
-var grpc = require('grpc');
+var grpc = require('@grpc/grpc-js')
 var helloworld_pb = require('./helloworld_pb.js');
 
 function serialize_HelloReply(arg) {

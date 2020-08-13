@@ -1,6 +1,7 @@
 const test = require('ava')
 const path = require('path')
 const grpc = require('@grpc/grpc-js')
+const { Status } = require('@grpc/grpc-js/build/src/constants')
 const hl = require('highland')
 const async = require('async')
 const _ = require('lodash')
@@ -58,23 +59,24 @@ test.cb('should handle an error in the handler in req/res app', t => {
   })
 
   app.use({ sayHello })
-  const server = app.start(APP_HOST)
-  t.truthy(server)
+  app.start(APP_HOST).then((server) => {
+    t.truthy(server)
 
-  const pd = pl.loadSync(PROTO_PATH)
-  const helloproto = grpc.loadPackageDefinition(pd).helloworld
-  const client = new helloproto.Greeter(APP_HOST, grpc.credentials.createInsecure())
-  client.sayHello({ name: 'Bob' }, (err, response) => {
-    t.truthy(err)
-    t.true(err.message.indexOf('boom') >= 0)
-    t.falsy(response)
-    t.is(errMsg, 'boom')
-    t.truthy(errCtx)
-    t.truthy(errCtx.call)
-    t.truthy(errCtx.req)
-    t.is(errCtx.name, 'SayHello')
-    t.is(errCtx.type, CallType.UNARY)
-    app.close().then(() => t.end())
+    const pd = pl.loadSync(PROTO_PATH)
+    const helloproto = grpc.loadPackageDefinition(pd).helloworld
+    const client = new helloproto.Greeter(APP_HOST, grpc.credentials.createInsecure())
+    client.sayHello({ name: 'Bob' }, (err, response) => {
+      t.truthy(err)
+      t.true(err.message.indexOf('boom') >= 0)
+      t.falsy(response)
+      t.is(errMsg, 'boom')
+      t.truthy(errCtx)
+      t.truthy(errCtx.call)
+      t.truthy(errCtx.req)
+      t.is(errCtx.name, 'SayHello')
+      t.is(errCtx.type, CallType.UNARY)
+      app.close().then(() => t.end())
+    })
   })
 })
 
@@ -102,23 +104,24 @@ test.cb('should handle an error in the handler in req/res app where ctx.res is a
   })
 
   app.use({ sayHello })
-  const server = app.start(APP_HOST)
-  t.truthy(server)
+  app.start(APP_HOST).then((server) => {
+    t.truthy(server)
 
-  const pd = pl.loadSync(PROTO_PATH)
-  const helloproto = grpc.loadPackageDefinition(pd).helloworld
-  const client = new helloproto.Greeter(APP_HOST, grpc.credentials.createInsecure())
-  client.sayHello({ name: 'Bob' }, (err, response) => {
-    t.truthy(err)
-    t.true(err.message.indexOf('boom') >= 0)
-    t.falsy(response)
-    t.is(errMsg, 'boom')
-    t.truthy(errCtx)
-    t.truthy(errCtx.call)
-    t.truthy(errCtx.req)
-    t.is(errCtx.name, 'SayHello')
-    t.is(errCtx.type, CallType.UNARY)
-    app.close().then(() => t.end())
+    const pd = pl.loadSync(PROTO_PATH)
+    const helloproto = grpc.loadPackageDefinition(pd).helloworld
+    const client = new helloproto.Greeter(APP_HOST, grpc.credentials.createInsecure())
+    client.sayHello({ name: 'Bob' }, (err, response) => {
+      t.truthy(err)
+      t.true(err.message.indexOf('boom') >= 0)
+      t.falsy(response)
+      t.is(errMsg, 'boom')
+      t.truthy(errCtx)
+      t.truthy(errCtx.call)
+      t.truthy(errCtx.req)
+      t.is(errCtx.name, 'SayHello')
+      t.is(errCtx.type, CallType.UNARY)
+      app.close().then(() => t.end())
+    })
   })
 })
 
@@ -140,18 +143,19 @@ test.cb('should return error when we set response to error explicitely', t => {
   })
 
   app.use({ sayHello })
-  const server = app.start(APP_HOST)
-  t.truthy(server)
+  app.start(APP_HOST).then((server) => {
+    t.truthy(server)
 
-  const pd = pl.loadSync(PROTO_PATH)
-  const helloproto = grpc.loadPackageDefinition(pd).helloworld
-  const client = new helloproto.Greeter(APP_HOST, grpc.credentials.createInsecure())
-  client.sayHello({ name: 'Bob' }, (err, response) => {
-    t.truthy(err)
-    t.true(err.message.indexOf('boom') >= 0)
-    t.falsy(response)
-    t.falsy(errCtx)
-    app.close().then(() => t.end())
+    const pd = pl.loadSync(PROTO_PATH)
+    const helloproto = grpc.loadPackageDefinition(pd).helloworld
+    const client = new helloproto.Greeter(APP_HOST, grpc.credentials.createInsecure())
+    client.sayHello({ name: 'Bob' }, (err, response) => {
+      t.truthy(err)
+      t.true(err.message.indexOf('boom') >= 0)
+      t.falsy(response)
+      t.falsy(errCtx)
+      app.close().then(() => t.end())
+    })
   })
 })
 
@@ -162,7 +166,7 @@ test.cb('should handle an error with code in the handler in req/res app', t => {
 
   function sayHello (ctx) {
     const err = new Error('crash')
-    err.code = 2000
+    err.code = Status.ABORTED
     throw err
   }
 
@@ -177,24 +181,25 @@ test.cb('should handle an error with code in the handler in req/res app', t => {
   })
 
   app.use({ sayHello })
-  const server = app.start(APP_HOST)
-  t.truthy(server)
+  app.start(APP_HOST).then((server) => {
+    t.truthy(server)
 
-  const pd = pl.loadSync(PROTO_PATH)
-  const helloproto = grpc.loadPackageDefinition(pd).helloworld
-  const client = new helloproto.Greeter(APP_HOST, grpc.credentials.createInsecure())
-  client.sayHello({ name: 'Bob' }, (err, response) => {
-    t.truthy(err)
-    t.true(err.message.indexOf('crash') >= 0)
-    t.is(err.code, 2000)
-    t.falsy(response)
-    t.is(errMsg, 'crash')
-    t.truthy(errCtx)
-    t.truthy(errCtx.call)
-    t.truthy(errCtx.req)
-    t.is(errCtx.name, 'SayHello')
-    t.is(errCtx.type, CallType.UNARY)
-    app.close().then(() => t.end())
+    const pd = pl.loadSync(PROTO_PATH)
+    const helloproto = grpc.loadPackageDefinition(pd).helloworld
+    const client = new helloproto.Greeter(APP_HOST, grpc.credentials.createInsecure())
+    client.sayHello({ name: 'Bob' }, (err, response) => {
+      t.truthy(err)
+      t.true(err.message.indexOf('crash') >= 0)
+      t.is(err.code, Status.ABORTED)
+      t.falsy(response)
+      t.is(errMsg, 'crash')
+      t.truthy(errCtx)
+      t.truthy(errCtx.call)
+      t.truthy(errCtx.req)
+      t.is(errCtx.name, 'SayHello')
+      t.is(errCtx.type, CallType.UNARY)
+      app.close().then(() => t.end())
+    })
   })
 })
 
@@ -211,7 +216,7 @@ test.cb('should handle custom error in the handler in req/res app', t => {
   const PROTO_PATH = path.resolve(__dirname, './protos/helloworld.proto')
 
   function sayHello (ctx) {
-    throw new MyCustomError('burn', 1234)
+    throw new MyCustomError('burn', Status.ABORTED)
   }
 
   const app = new Mali(PROTO_PATH, 'Greeter')
@@ -225,24 +230,25 @@ test.cb('should handle custom error in the handler in req/res app', t => {
   })
 
   app.use({ sayHello })
-  const server = app.start(APP_HOST)
-  t.truthy(server)
+  app.start(APP_HOST).then((server) => {
+    t.truthy(server)
 
-  const pd = pl.loadSync(PROTO_PATH)
-  const helloproto = grpc.loadPackageDefinition(pd).helloworld
-  const client = new helloproto.Greeter(APP_HOST, grpc.credentials.createInsecure())
-  client.sayHello({ name: 'Bob' }, (err, response) => {
-    t.truthy(err)
-    t.true(err.message.indexOf('burn') >= 0)
-    t.is(err.code, 1234)
-    t.falsy(response)
-    t.is(errMsg, 'burn')
-    t.truthy(errCtx)
-    t.truthy(errCtx.call)
-    t.truthy(errCtx.req)
-    t.is(errCtx.name, 'SayHello')
-    t.is(errCtx.type, CallType.UNARY)
-    app.close().then(() => t.end())
+    const pd = pl.loadSync(PROTO_PATH)
+    const helloproto = grpc.loadPackageDefinition(pd).helloworld
+    const client = new helloproto.Greeter(APP_HOST, grpc.credentials.createInsecure())
+    client.sayHello({ name: 'Bob' }, (err, response) => {
+      t.truthy(err)
+      t.true(err.message.indexOf('burn') >= 0)
+      t.is(err.code, Status.ABORTED)
+      t.falsy(response)
+      t.is(errMsg, 'burn')
+      t.truthy(errCtx)
+      t.truthy(errCtx.call)
+      t.truthy(errCtx.req)
+      t.is(errCtx.name, 'SayHello')
+      t.is(errCtx.type, CallType.UNARY)
+      app.close().then(() => t.end())
+    })
   })
 })
 
@@ -270,54 +276,55 @@ test.cb('should handle an error in the handler in res stream app', t => {
   })
 
   app.use({ listStuff })
-  const server = app.start(APP_HOST)
-  t.truthy(server)
+  app.start(APP_HOST).then((server) => {
+    t.truthy(server)
 
-  const pd = pl.loadSync(PROTO_PATH)
-  const proto = grpc.loadPackageDefinition(pd).argservice
-  const client = new proto.ArgService(APP_HOST, grpc.credentials.createInsecure())
-  const call = client.listStuff({ message: 'Hello' })
+    const pd = pl.loadSync(PROTO_PATH)
+    const proto = grpc.loadPackageDefinition(pd).argservice
+    const client = new proto.ArgService(APP_HOST, grpc.credentials.createInsecure())
+    const call = client.listStuff({ message: 'Hello' })
 
-  let dataCounter = 0
-  call.on('data', msg => {
-    dataCounter++
-  })
+    let dataCounter = 0
+    call.on('data', msg => {
+      dataCounter++
+    })
 
-  let errMsg2
-  call.on('error', err => {
-    errMsg2 = err ? err.message : ''
-    if (!endCalled) {
-      endCalled = true
-      _.delay(() => {
-        endTest()
-      }, 200)
+    let errMsg2
+    call.on('error', err => {
+      errMsg2 = err ? err.message : ''
+      if (!endCalled) {
+        endCalled = true
+        _.delay(() => {
+          endTest()
+        }, 200)
+      }
+    })
+
+    let endCalled = false
+    call.on('end', () => {
+      if (!endCalled) {
+        endCalled = true
+        _.delay(() => {
+          endTest()
+        }, 200)
+      }
+    })
+
+    function endTest () {
+      t.true(dataCounter >= 1)
+      t.truthy(errMsg1)
+      t.truthy(errMsg2)
+      t.true(endCalled)
+      t.true(errMsg1.indexOf('Unexpected token') >= 0)
+      t.true(errMsg2.indexOf('Unexpected token') >= 0)
+      t.truthy(errCtx)
+      t.truthy(errCtx.call)
+      t.truthy(errCtx.req)
+      t.is(errCtx.name, 'ListStuff')
+      t.is(errCtx.type, CallType.RESPONSE_STREAM)
+      app.close().then(() => t.end())
     }
   })
-
-  let endCalled = false
-  call.on('end', () => {
-    if (!endCalled) {
-      endCalled = true
-      _.delay(() => {
-        endTest()
-      }, 200)
-    }
-  })
-
-  function endTest () {
-    t.true(dataCounter >= 1)
-    t.truthy(errMsg1)
-    t.truthy(errMsg2)
-    t.true(endCalled)
-    t.true(errMsg1.indexOf('Unexpected token') >= 0)
-    t.true(errMsg2.indexOf('Unexpected token') >= 0)
-    t.truthy(errCtx)
-    t.truthy(errCtx.call)
-    t.truthy(errCtx.req)
-    t.is(errCtx.name, 'ListStuff')
-    t.is(errCtx.type, CallType.RESPONSE_STREAM)
-    app.close().then(() => t.end())
-  }
 })
 
 test.cb('should handle an error in the handler in req stream app', t => {
@@ -354,51 +361,52 @@ test.cb('should handle an error in the handler in req stream app', t => {
   })
 
   app.use({ writeStuff })
-  const server = app.start(APP_HOST)
-  t.truthy(server)
+  app.start(APP_HOST).then((server) => {
+    t.truthy(server)
 
-  let w = true
-  let ended = false
-  const pd = pl.loadSync(PROTO_PATH)
-  const proto = grpc.loadPackageDefinition(pd).argservice
-  const client = new proto.ArgService(APP_HOST, grpc.credentials.createInsecure())
-  const call = client.writeStuff((err, res) => {
-    w = false
-    ended = true
-    t.truthy(err)
-    t.truthy(err.message)
-    t.true(errMsg1.indexOf('Unexpected token') >= 0)
-    t.true(err.message.indexOf('Unexpected token') >= 0)
-    t.falsy(res)
-    t.truthy(errCtx)
-    t.truthy(errCtx.call)
-    t.truthy(errCtx.req)
-    t.is(errCtx.name, 'WriteStuff')
-    t.is(errCtx.type, CallType.REQUEST_STREAM)
-    app.close().then(() => t.end())
-  })
+    let w = true
+    let ended = false
+    const pd = pl.loadSync(PROTO_PATH)
+    const proto = grpc.loadPackageDefinition(pd).argservice
+    const client = new proto.ArgService(APP_HOST, grpc.credentials.createInsecure())
+    const call = client.writeStuff((err, res) => {
+      w = false
+      ended = true
+      t.truthy(err)
+      t.truthy(err.message)
+      t.true(errMsg1.indexOf('Unexpected token') >= 0)
+      t.true(err.message.indexOf('Unexpected token') >= 0)
+      t.falsy(res)
+      t.truthy(errCtx)
+      t.truthy(errCtx.call)
+      t.truthy(errCtx.req)
+      t.is(errCtx.name, 'WriteStuff')
+      t.is(errCtx.type, CallType.REQUEST_STREAM)
+      app.close().then(() => t.end())
+    })
 
-  call.on('error', () => {
-    w = false
-  })
+    call.on('error', () => {
+      w = false
+    })
 
-  call.on('close', () => {
-    w = false
-  })
+    call.on('close', () => {
+      w = false
+    })
 
-  call.on('finish', () => {
-    w = false
-  })
+    call.on('finish', () => {
+      w = false
+    })
 
-  async.eachSeries(getArrayData(), (d, asfn) => {
-    if (w) {
-      call.write(d)
-    }
-    _.delay(asfn, _.random(10, 50))
-  }, () => {
-    if (!ended) {
-      call.end()
-    }
+    async.eachSeries(getArrayData(), (d, asfn) => {
+      if (w) {
+        call.write(d)
+      }
+      _.delay(asfn, _.random(10, 50))
+    }, () => {
+      if (!ended) {
+        call.end()
+      }
+    })
   })
 })
 
@@ -430,7 +438,7 @@ test('should handle error in response stream', async t => {
       resolve(err)
     })
   })
-  app.start(APP_HOST)
+  await app.start(APP_HOST)
 
   const pd = pl.loadSync(PROTO_PATH)
   const proto = grpc.loadPackageDefinition(pd).argservice
@@ -444,9 +452,6 @@ test('should handle error in response stream', async t => {
   const resData = []
   call.on('data', d => {
     resData.push(d)
-  })
-  call.on('end', () => {
-    t.fail('not expecting end')
   })
   const msg1 = (await appErrorPromise).message
   const msg2 = (await callErrorPromise).message
@@ -493,60 +498,61 @@ test.cb('should handle an error in the handler of duplex call', t => {
   })
 
   app.use({ processStuff })
-  const server = app.start(APP_HOST)
-  t.truthy(server)
-  const pd = pl.loadSync(PROTO_PATH)
-  const proto = grpc.loadPackageDefinition(pd).argservice
-  const client = new proto.ArgService(APP_HOST, grpc.credentials.createInsecure())
-  const call = client.processStuff()
+  app.start(APP_HOST).then((server) => {
+    t.truthy(server)
+    const pd = pl.loadSync(PROTO_PATH)
+    const proto = grpc.loadPackageDefinition(pd).argservice
+    const client = new proto.ArgService(APP_HOST, grpc.credentials.createInsecure())
+    const call = client.processStuff()
 
-  let dataCounter = 0
-  call.on('data', d => {
-    dataCounter++
-  })
+    let dataCounter = 0
+    call.on('data', d => {
+      dataCounter++
+    })
 
-  let errMsg2 = ''
-  call.on('error', err2 => {
-    errMsg2 = err2 ? err2.message : ''
-    if (!endCalled) {
-      endCalled = true
-      _.delay(() => {
-        endTest()
-      }, 200)
+    let errMsg2 = ''
+    call.on('error', err2 => {
+      errMsg2 = err2 ? err2.message : ''
+      if (!endCalled) {
+        endCalled = true
+        _.delay(() => {
+          endTest()
+        }, 200)
+      }
+    })
+
+    let endCalled = false
+    call.on('end', () => {
+      if (!endCalled) {
+        endCalled = true
+        _.delay(() => {
+          endTest()
+        }, 200)
+      }
+    })
+
+    async.eachSeries(getArrayData(), (d, asfn) => {
+      call.write(d)
+      _.delay(asfn, _.random(10, 50))
+    }, () => {
+      call.end()
+    })
+
+    function endTest () {
+      t.is(dataCounter, 2)
+      t.truthy(errMsg1)
+      t.truthy(errMsg2)
+      t.true(endCalled)
+      t.true(errMsg1.indexOf('Unexpected token') >= 0)
+      t.true(errMsg2.indexOf('Unexpected token') >= 0)
+      t.truthy(errCtx)
+      t.truthy(errCtx.call)
+      t.truthy(errCtx.req)
+      t.is(errCtx.name, 'ProcessStuff')
+      t.is(errCtx.type, CallType.DUPLEX)
+      app.close().then(() => t.end())
     }
   })
-
-  let endCalled = false
-  call.on('end', () => {
-    if (!endCalled) {
-      endCalled = true
-      _.delay(() => {
-        endTest()
-      }, 200)
-    }
-  })
-
-  async.eachSeries(getArrayData(), (d, asfn) => {
-    call.write(d)
-    _.delay(asfn, _.random(10, 50))
-  }, () => {
-    call.end()
-  })
-
-  function endTest () {
-    t.is(dataCounter, 2)
-    t.truthy(errMsg1)
-    t.truthy(errMsg2)
-    t.true(endCalled)
-    t.true(errMsg1.indexOf('Unexpected token') >= 0)
-    t.true(errMsg2.indexOf('Unexpected token') >= 0)
-    t.truthy(errCtx)
-    t.truthy(errCtx.call)
-    t.truthy(errCtx.req)
-    t.is(errCtx.name, 'ProcessStuff')
-    t.is(errCtx.type, CallType.DUPLEX)
-    app.close().then(() => t.end())
-  }
 })
 
 test.cb('should handle an error in the handler of duplex call that returns a promise', t => {
@@ -591,58 +597,59 @@ test.cb('should handle an error in the handler of duplex call that returns a pro
   })
 
   app.use({ processStuff })
-  const server = app.start(APP_HOST)
-  t.truthy(server)
-  const pd = pl.loadSync(PROTO_PATH)
-  const proto = grpc.loadPackageDefinition(pd).argservice
-  const client = new proto.ArgService(APP_HOST, grpc.credentials.createInsecure())
-  const call = client.processStuff()
+  app.start(APP_HOST).then((server) => {
+    t.truthy(server)
+    const pd = pl.loadSync(PROTO_PATH)
+    const proto = grpc.loadPackageDefinition(pd).argservice
+    const client = new proto.ArgService(APP_HOST, grpc.credentials.createInsecure())
+    const call = client.processStuff()
 
-  let dataCounter = 0
-  call.on('data', d => {
-    dataCounter++
-  })
+    let dataCounter = 0
+    call.on('data', d => {
+      dataCounter++
+    })
 
-  let errMsg2 = ''
-  call.on('error', err2 => {
-    errMsg2 = err2 ? err2.message : ''
-    if (!endCalled) {
-      endCalled = true
-      _.delay(() => {
-        endTest()
-      }, 200)
+    let errMsg2 = ''
+    call.on('error', err2 => {
+      errMsg2 = err2 ? err2.message : ''
+      if (!endCalled) {
+        endCalled = true
+        _.delay(() => {
+          endTest()
+        }, 200)
+      }
+    })
+
+    let endCalled = false
+    call.on('end', () => {
+      if (!endCalled) {
+        endCalled = true
+        _.delay(() => {
+          endTest()
+        }, 200)
+      }
+    })
+
+    async.eachSeries(getArrayData(), (d, asfn) => {
+      call.write(d)
+      _.delay(asfn, _.random(10, 50))
+    }, () => {
+      call.end()
+    })
+
+    function endTest () {
+      t.is(dataCounter, 2)
+      t.truthy(errMsg1)
+      t.truthy(errMsg2)
+      t.true(endCalled)
+      t.true(errMsg1.indexOf('Unexpected token') >= 0)
+      t.true(errMsg2.indexOf('Unexpected token') >= 0)
+      t.truthy(errCtx)
+      t.truthy(errCtx.call)
+      t.truthy(errCtx.req)
+      t.is(errCtx.name, 'ProcessStuff')
+      t.is(errCtx.type, CallType.DUPLEX)
+      app.close().then(() => t.end())
     }
   })
-
-  let endCalled = false
-  call.on('end', () => {
-    if (!endCalled) {
-      endCalled = true
-      _.delay(() => {
-        endTest()
-      }, 200)
-    }
-  })
-
-  async.eachSeries(getArrayData(), (d, asfn) => {
-    call.write(d)
-    _.delay(asfn, _.random(10, 50))
-  }, () => {
-    call.end()
-  })
-
-  function endTest () {
-    t.is(dataCounter, 2)
-    t.truthy(errMsg1)
-    t.truthy(errMsg2)
-    t.true(endCalled)
-    t.true(errMsg1.indexOf('Unexpected token') >= 0)
-    t.true(errMsg2.indexOf('Unexpected token') >= 0)
-    t.truthy(errCtx)
-    t.truthy(errCtx.call)
-    t.truthy(errCtx.req)
-    t.is(errCtx.name, 'ProcessStuff')
-    t.is(errCtx.type, CallType.DUPLEX)
-    app.close().then(() => t.end())
-  }
 })
